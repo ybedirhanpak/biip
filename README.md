@@ -1,5 +1,5 @@
 # BIIP
-Finding Maximum Edge Biclique in BipartiteNetworks by Integer Programming
+Finding Maximum Edge Biclique in Bipartite Networks by Integer Programming
 
 The paper is under submission to 2018 conferance. In order to use this code make sure you cite it properly. You will find the proper citation after September if paper has the acceptance.
 
