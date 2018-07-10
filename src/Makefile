@@ -5,7 +5,7 @@ CARGS    = -m64 -g
 CLIB     = -L$(GUROBI_HOME)/lib/ -lgurobi65
 CPPLIB   = -L$(GUROBI_HOME)/lib/ -lgurobi_c++ -lgurobi65
 
-all:	biip biclique7 bicliqueMelih1 bicliqueMelih2
+all:	biip
 
 
 biip:	biip.cpp
