@@ -11,5 +11,4 @@ For BIIP, you can use makefile to compile and for execution you will need Gurobi
 **Finding Maximum Edge Biclique in Bipartite Networks by Integer Programming**<br/>
 Melih Sözdinler, Can Özturan, DOI: 10.1109/CSE.2018.00025
 Conference: 2018 IEEE International Conference on Computational Science and Engineering (CSE) <br/>
-[10.1109/CSE.2018.00025.](https://ieeexplore.ieee.org/document/8588229) <br/>
-[![doi]](https://ieeexplore.ieee.org/document/8588229)
+[10.1109/CSE.2018.00025.](https://ieeexplore.ieee.org/document/8588229)
