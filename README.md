@@ -12,4 +12,4 @@ For BIIP, you can use makefile to compile and for execution you will need Gurobi
 Melih Sözdinler, Can Özturan, DOI: 10.1109/CSE.2018.00025
 Conference: 2018 IEEE International Conference on Computational Science and Engineering (CSE) <br/>
 [10.1109/CSE.2018.00025.](https://ieeexplore.ieee.org/document/8588229) <br/>
-[![doi](http://img.shields.io/badge/doi-10.1093%2Fbioinformatics%2Fbts494-blue.svg?style=flat)](https://ieeexplore.ieee.org/document/8588229)
+[![doi]](https://ieeexplore.ieee.org/document/8588229)
