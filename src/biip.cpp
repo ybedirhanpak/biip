@@ -62,8 +62,8 @@ void graphviz(double *) ;
 int  solvegurobi2(int ln,int rn,int m,int L,int K) ;
 int  quadsearch(int, int, int, int, int, int, int) ;
 int  shallwesolve(int, int) ; 
-int  updateclist(int,int) ; 
-int  masknodes(int,int) ; 
+void  updateclist(int,int) ; 
+void  masknodes(int,int) ; 
 int  newrn, newln, newm, newn, maxln, maxrn, maxn, maxm ; 
 int n, m, ln,rn ; 
 
@@ -93,7 +93,7 @@ long int returnMiliSeconds()
         long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
-main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
    string x,y ; 
    int    lcount,rcount,mcount,ix,iy ;
@@ -170,7 +170,7 @@ main(int argc,char *argv[])
    m = mcount ;
    ln =  lnodes.size() - 1 ; 
    rn =  rnodes.size() - 1 ;
-   
+
   /* allocate memory */
   sol      = (double *)   malloc((n+m)*sizeof(double)) ;
   maxsol   = (double *)   malloc((n+m)*sizeof(double)) ;
@@ -231,12 +231,12 @@ main(int argc,char *argv[])
    }
 
 
-  printf("Soln Time: %d - %d\n", timeAfter, timeBefore ); 
+  printf("Soln Time: %ld - %ld\n", timeAfter, timeBefore ); 
   FILE * fptr2 = fopen( "status.txt", "w" ); 
   fprintf( fptr2, "%d\t%ld\t%ld\t%d\t%lf\t%lf", 1, countRSoln , countLSoln , rc, solnTime, (timeAfter - timeBefore) / 1000.0  );
   fclose( fptr2 );
 
-
+  return 0;
 }
 
 void graphviz(double * sol)
@@ -627,7 +627,7 @@ int J)
     return(1) ; 
 }
 
-int updateclist(
+void updateclist(
 int I, 
 int J)
 { 
@@ -646,7 +646,7 @@ int J)
    clist.push_front(cr); 
 }
 
-int masknodes(
+void masknodes(
 int I,
 int J)
 {
