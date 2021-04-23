@@ -2,8 +2,8 @@ INC      =  $(GUROBI_HOME)/include/
 CC       =  gcc 
 CPP      =  g++ 
 CARGS    = -m64 -g
-CLIB     = -L$(GUROBI_HOME)/lib/ -lgurobi65
-CPPLIB   = -L$(GUROBI_HOME)/lib/ -lgurobi_c++ -lgurobi65
+CLIB     = -L$(GUROBI_HOME)/lib/ -lgurobi91
+CPPLIB   = -L$(GUROBI_HOME)/lib/ -lgurobi_c++ -lgurobi91
 
 all:	biip
 
