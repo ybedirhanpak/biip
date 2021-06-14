@@ -12,13 +12,34 @@
 #include <list>
 #include <algorithm>
 #include <sys/time.h>
-
+#include <omp.h>
 extern "C" {
 #include "gurobi_c.h"
 }
 
+
 #define DEBUG_ENABLE 0 
 
+
+// For convenient trailing-return-types in C++11:
+#define AUTO_RETURN(...) \
+ noexcept(noexcept(__VA_ARGS__)) -> decltype(__VA_ARGS__) {return (__VA_ARGS__);}
+
+template <typename T>
+constexpr auto decayed_begin(T&& c)
+AUTO_RETURN(std::begin(std::forward<T>(c)))
+
+template <typename T>
+constexpr auto decayed_end(T&& c)
+AUTO_RETURN(std::end(std::forward<T>(c)))
+
+template <typename T, std::size_t N>
+constexpr auto decayed_begin(T(&c)[N])
+AUTO_RETURN(reinterpret_cast<typename std::remove_all_extents<T>::type*>(c    ))
+
+template <typename T, std::size_t N>
+constexpr auto decayed_end(T(&c)[N])
+AUTO_RETURN(reinterpret_cast<typename std::remove_all_extents<T>::type*>(c + N))
 using namespace std ;
 
 // Definitions 
@@ -95,6 +116,8 @@ long int returnMiliSeconds()
 
 int main(int argc,char *argv[])
 {
+   omp_set_dynamic(1);
+   omp_set_nested(1);
    string x,y ; 
    int    lcount,rcount,mcount,ix,iy ;
    map< string, int >::iterator itm ;
@@ -231,7 +254,7 @@ int main(int argc,char *argv[])
    }
 
 
-  printf("Soln Time: %ld - %ld\n", timeAfter, timeBefore ); 
+  printf("Soln Time: %ld - %ld - %ld\n", timeAfter, timeBefore ,timeAfter -timeBefore); 
   FILE * fptr2 = fopen( "status.txt", "w" ); 
   fprintf( fptr2, "%d\t%ld\t%ld\t%d\t%lf\t%lf", 1, countRSoln , countLSoln , rc, solnTime, (timeAfter - timeBefore) / 1000.0  );
   fclose( fptr2 );
@@ -510,26 +533,30 @@ int J)
   printf("passed 8\n") ;
 #endif
   
-  printf("\nOptimization complete\n");
-  if (optimstatus == GRB_OPTIMAL) {
-    printf("Optimal objective: %.0f\n", objval);
-    if (maxobjval < objval) {
-       maxobjval = objval ; 
-       memcpy (maxsol,sol,(newn+newm)*sizeof(double));
-       maxn = newn ;
-       maxm = newm ; 
-       maxln = newln ;
-       maxrn = newrn ;
-    } 
-    rc = 1 ; 
-  } else if (optimstatus == GRB_INF_OR_UNBD) {
-    printf("Model is infeasible or unbounded\n");
-    rc = 0 ; 
-    updateclist(I,J) ;
-  } else {
-    printf("Optimization was stopped early\n");
-    rc = 0 ;
-    updateclist(I,J) ;
+  #pragma omp critical
+  {
+   printf("\nOptimization complete\n");
+   if (optimstatus == GRB_OPTIMAL) {
+      printf("Optimal objective: %.0f\n", objval);
+      
+      if (maxobjval < objval) {
+         maxobjval = objval ; 
+         memcpy (maxsol,sol,(newn+newm)*sizeof(double));
+         maxn = newn ;
+         maxm = newm ; 
+         maxln = newln ;
+         maxrn = newrn ;
+      } 
+      rc = 1 ; 
+   } else if (optimstatus == GRB_INF_OR_UNBD) {
+      printf("Model is infeasible or unbounded\n");
+      rc = 0 ; 
+      updateclist(I,J) ;
+   } else {
+      printf("Optimization was stopped early\n");
+      rc = 0 ;
+      updateclist(I,J) ;
+   }
   }
 #ifndef DEBUG_ENABLE
   printf("passed 9\n") ;
@@ -572,8 +599,10 @@ int JR)
    int m1,m2,m3  ;
    int I,J ; 
    int exists ;    
-   
-   printf("quadsearch(%d,%d,%d,%d)\n",IL,JL,IR,JR) ;
+   int params[3][4];
+   int ms[3];
+   printf("(%d,%d)",omp_get_num_threads(),omp_get_thread_num());
+   // printf("quadsearch(%d,%d,%d,%d)\n",IL,JL,IR,JR) ;
    if ( IL > IR) return(0) ; 
    if ( JL > JR) return(0) ; 
    I = (IL+IR) / 2 ;
@@ -586,30 +615,39 @@ int JR)
    }
    if ( exists ) {
       maxedges = I*J ; 
-	  
+	   int paramsToCopy[3][4] = {{I+1,J+1,IR,JR},{IL,J+1,I,JR},{I+1,JL,IR,J}};
+      std::copy( decayed_begin(paramsToCopy), decayed_end(paramsToCopy), decayed_begin(params));
+
 #ifndef DEBUG_ENABLE
       printf("MAXEDGES: %d\n",maxedges) ; 
 #endif
-	
-      m1 = quadsearch(ln,rn,m,I+1,J+1,IR,JR) ; 
-      m2 = quadsearch(ln,rn,m,IL,J+1,I,JR) ;
-      m3 = quadsearch(ln,rn,m,I+1,JL,IR,J) ;
+      
    }
    else {
+      int paramsToCopy[3][4] = {{IL,JL,I-1,J-1},{IL,J,I-1,JR},{I,JL,IR,J-1}};
+      std::copy( decayed_begin(paramsToCopy), decayed_end(paramsToCopy), decayed_begin(params));
+
       maxedges = 0 ; 
-      m1 = quadsearch(ln,rn,m,IL,JL,I-1,J-1) ;
-      m2 = quadsearch(ln,rn,m,IL,J,I-1,JR) ;
-      m3 = quadsearch(ln,rn,m,I,JL,IR,J-1) ; 
    }
 
-   if (maxedges < m1 ) {
-      maxedges = m1 ; 
+   #pragma omp parallel shared(maxobjval,maxsol,maxln,maxrn,maxn,maxm,ms,params) private(sol,obj,vtype,rmask,lmask,enoarr,newrn,newln,newm,newn) num_threads(3)
+      #pragma omp for
+         for(int i = 0;i<3;i++){
+            
+            // printf("num%f",omp_get_num_threads());
+            #pragma omp task
+            ms[i] = quadsearch(ln,rn,m,params[i][0],params[i][1],params[i][2],params[i][3]);
+         
+         }
+
+   if (maxedges < ms[0] ) {
+      maxedges = ms[0] ; 
    }
-   if (maxedges < m2 ) {
-      maxedges = m2 ; 
+   if (maxedges < ms[1] ) {
+      maxedges = ms[1] ; 
    }
-   if (maxedges < m3 ) {
-      maxedges = m3 ; 
+   if (maxedges < ms[2] ){
+      maxedges = ms[2] ; 
    } 
    return(maxedges) ; 
 }
