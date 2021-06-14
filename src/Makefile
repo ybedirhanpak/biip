@@ -9,4 +9,4 @@ all:	biip
 
 
 biip:	biip.cpp
-		$(CPP) $(CARGS) -o biip biip.cpp -I$(INC) $(CPPLIB) -lpthread -lm
+		$(CPP) $(CARGS) -o biip biip.cpp -I$(INC) $(CPPLIB) -lpthread -lm -fopenmp
